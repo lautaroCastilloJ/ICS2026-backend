@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!--
+    Capa transversal (Shared Kernel).
+
+    REGLA: este proyecto NO debe referenciar ninguna otra capa de la solucion.
+    Es una hoja del grafo de dependencias, y por eso cualquier capa puede
+    referenciarlo sin romper la Regla de Dependencia de Clean Architecture.
+
+    Solo debe contener elementos usados por dos o mas capas y sin logica de
+    negocio: la base comun de excepciones y el catalogo de mensajes.
+  -->
+
+  <ItemGroup>
+    <Compile Update="Resources\Messages.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Messages.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\Messages.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Messages.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

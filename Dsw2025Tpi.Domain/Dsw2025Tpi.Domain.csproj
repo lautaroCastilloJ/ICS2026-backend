@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!--
+    Capa de Dominio.
+
+    REGLA: no debe tener PackageReference a ninguna libreria de infraestructura
+    (EF Core, Identity, etc.). Solo referencia a Dsw2025Tpi.Shared, que es una
+    hoja del grafo de dependencias.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\Dsw2025Tpi.Shared\Dsw2025Tpi.Shared.csproj" />
+  </ItemGroup>
+
+</Project>
