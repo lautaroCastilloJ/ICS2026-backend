@@ -13,7 +13,14 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
 
         builder.HasKey(o => o.Id);
 
+        // La fecha se guarda en UTC. datetime2 no guarda la zona horaria, asi que
+        // al leerla EF la devuelve como Unspecified y la API la serializaba sin
+        // la "Z": el navegador la tomaba como hora local (+3 h en Argentina).
+        // La conversion la marca como UTC al leer; el cliente la pasa a su hora.
         builder.Property(o => o.Date)
+            .HasConversion(
+                date => date.Kind == DateTimeKind.Local ? date.ToUniversalTime() : date,
+                date => DateTime.SpecifyKind(date, DateTimeKind.Utc))
             .IsRequired();
 
         // Value Objects: se guardan como columnas de la propia tabla Orders
