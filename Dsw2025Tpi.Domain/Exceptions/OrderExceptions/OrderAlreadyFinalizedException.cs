@@ -6,6 +6,8 @@ namespace Dsw2025Tpi.Domain.Exceptions.OrderExceptions;
 
 public sealed class OrderAlreadyFinalizedException : ExceptionBase
 {
+    public override ErrorType Type => ErrorType.BusinessRule;
+
     public Guid OrderId { get; }
     public OrderStatus CurrentStatus { get; }
     public OrderStatus RequestedStatus { get; }

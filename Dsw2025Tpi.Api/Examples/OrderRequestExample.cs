@@ -1,4 +1,4 @@
-using Dsw2025Tpi.Application.Dtos.Orders;
+Ôªøusing Dsw2025Tpi.Application.Dtos.Orders;
 using Swashbuckle.AspNetCore.Filters;
 
 namespace Dsw2025Tpi.Api.Examples;
@@ -8,9 +8,9 @@ public class OrderRequestExample : IExamplesProvider<OrderRequest>
     public OrderRequest GetExamples()
     {
         return new OrderRequest(
-            ShippingAddress: "Calle: , Altura: , Ciudad: San Miguel de Tucum·n, Provincia: Tucum·n",
-            BillingAddress: "Calle: , Altura: , Ciudad: San Miguel de Tucum·n, Provincia: Tucum·n",
-            Notes: "Entregar despuÈs de las 18:00",
+            ShippingAddress: "Calle: , Altura: , Ciudad: San Miguel de Tucum√°n, Provincia: Tucum√°n",
+            BillingAddress: "Calle: , Altura: , Ciudad: San Miguel de Tucum√°n, Provincia: Tucum√°n",
+            Notes: "Entregar despu√©s de las 18:00",
             OrderItems: new List<OrderItemRequest>
             {
                 new OrderItemRequest(

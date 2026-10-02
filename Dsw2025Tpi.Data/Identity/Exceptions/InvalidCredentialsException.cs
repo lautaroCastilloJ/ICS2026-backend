@@ -4,6 +4,8 @@ namespace Dsw2025Tpi.Data.Identity.Exceptions;
 
 public sealed class InvalidCredentialsException : ExceptionBase
 {
+    public override ErrorType Type => ErrorType.Unauthorized;
+
     public InvalidCredentialsException()
         : base("AUTH_INVALID_CREDENTIALS") { }
 }

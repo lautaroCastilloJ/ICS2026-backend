@@ -1,3 +1,5 @@
+using Dsw2025Tpi.Api.Errors;
+using Dsw2025Tpi.Shared.Resources;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
@@ -24,10 +26,12 @@ public sealed class ValidateCustomerIdAttribute : ActionFilterAttribute
 
         if (!Guid.TryParse(customerIdClaim, out var customerId) || customerId == Guid.Empty)
         {
-            context.Result = new UnauthorizedObjectResult(new 
-            { 
-                error = "No se pudo resolver el cliente desde el token." 
-            });
+            const string code = "AUTH_CUSTOMER_NOT_RESOLVED";
+            context.Result = new UnauthorizedObjectResult(new ErrorResponse(
+                code,
+                ErrorMessages.Get(code),
+                StatusCodes.Status401Unauthorized,
+                context.HttpContext.TraceIdentifier));
             return;
         }
 

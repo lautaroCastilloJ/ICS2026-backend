@@ -1,4 +1,5 @@
 ﻿using Dsw2025Tpi.Api.Configurations;
+using Dsw2025Tpi.Api.Errors;
 using Dsw2025Tpi.Api.Middlewares;
 using Dsw2025Tpi.Application.Interfaces;
 using Dsw2025Tpi.Application.Services;
@@ -25,7 +26,8 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
 
         // Add services to the container.
-        builder.Services.AddControllers();
+        builder.Services.AddControllers()
+            .AddValidationErrorResponse();
       
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(o =>

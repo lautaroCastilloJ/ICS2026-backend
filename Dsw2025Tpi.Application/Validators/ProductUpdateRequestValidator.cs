@@ -1,4 +1,4 @@
-using Dsw2025Tpi.Application.Dtos.Products;
+Ôªøusing Dsw2025Tpi.Application.Dtos.Products;
 using FluentValidation;
 
 namespace Dsw2025Tpi.Application.Validators;
@@ -10,11 +10,11 @@ public class ProductUpdateRequestValidator : AbstractValidator<ProductUpdateRequ
         RuleFor(p => p.Sku)
             .NotEmpty().WithMessage("El SKU es obligatorio.")
             .Length(3, 50).WithMessage("El SKU debe tener entre 3 y 50 caracteres.")
-            .Matches(@"^[A-Z0-9\-]+$").WithMessage("El SKU solo puede contener letras may˙sculas, n˙meros y guiones.");
+            .Matches(@"^[A-Z0-9\-]+$").WithMessage("El SKU solo puede contener letras may√∫sculas, n√∫meros y guiones.");
 
         RuleFor(p => p.InternalCode)
-            .NotEmpty().WithMessage("El cÛdigo interno es obligatorio.")
-            .Length(1, 50).WithMessage("El cÛdigo interno no puede exceder 50 caracteres.");
+            .NotEmpty().WithMessage("El c√≥digo interno es obligatorio.")
+            .Length(1, 50).WithMessage("El c√≥digo interno no puede exceder 50 caracteres.");
 
         RuleFor(p => p.Name)
             .NotEmpty().WithMessage("El nombre es obligatorio.")
@@ -22,7 +22,7 @@ public class ProductUpdateRequestValidator : AbstractValidator<ProductUpdateRequ
 
         RuleFor(p => p.Description)
             .MaximumLength(250).When(p => p.Description != null)
-            .WithMessage("La descripciÛn no puede exceder 250 caracteres.");
+            .WithMessage("La descripci√≥n no puede exceder 250 caracteres.");
 
         RuleFor(p => p.CurrentUnitPrice)
             .GreaterThan(0).WithMessage("El precio debe ser mayor a 0.");
@@ -35,7 +35,7 @@ public class ProductUpdateRequestValidator : AbstractValidator<ProductUpdateRequ
             .MaximumLength(500).When(p => !string.IsNullOrWhiteSpace(p.ImageUrl))
             .WithMessage("La URL de la imagen no puede exceder 500 caracteres.")
             .Must(BeAValidUrl).When(p => !string.IsNullOrWhiteSpace(p.ImageUrl))
-            .WithMessage("La URL de la imagen debe ser una URL v·lida.");
+            .WithMessage("La URL de la imagen debe ser una URL v√°lida.");
     }
 
     private bool BeAValidUrl(string? url)

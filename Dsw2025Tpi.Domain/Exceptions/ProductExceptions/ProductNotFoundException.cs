@@ -2,6 +2,8 @@
 
 public sealed class ProductNotFoundException : ExceptionBase
 {
+    public override ErrorType Type => ErrorType.NotFound;
+
     public ProductNotFoundException(Guid productId)
         : base("PRODUCT_NOT_FOUND")
     {

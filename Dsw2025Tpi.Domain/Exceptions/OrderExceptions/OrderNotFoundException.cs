@@ -4,6 +4,8 @@ namespace Dsw2025Tpi.Domain.Exceptions.OrderExceptions;
 
 public sealed class OrderNotFoundException : ExceptionBase
 {
+    public override ErrorType Type => ErrorType.NotFound;
+
     public Guid OrderId { get; }
 
     public OrderNotFoundException(Guid orderId)

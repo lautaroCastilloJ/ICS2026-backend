@@ -5,6 +5,8 @@ namespace Dsw2025Tpi.Domain.Exceptions.ProductExceptions;
 
 public sealed class ProductSkuAlreadyExistsDisabledException : ExceptionBase
 {
+    public override ErrorType Type => ErrorType.Conflict;
+
     public string Sku { get; }
     public Guid ExistingProductId { get; }
 

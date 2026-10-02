@@ -6,6 +6,12 @@ public abstract class ExceptionBase : Exception
 {
     public string Code { get; }
 
+    /// <summary>
+    /// Categoria del error. Por defecto, error de validacion; cada excepcion la
+    /// sobrescribe cuando representa otro tipo de falla.
+    /// </summary>
+    public virtual ErrorType Type => ErrorType.Validation;
+
     protected ExceptionBase(string code)
         : base(GetMessageFromResource(code))
     {
@@ -25,15 +31,5 @@ public abstract class ExceptionBase : Exception
     }
 
     private static string GetMessageFromResource(string code)
-    {
-        // Convertir dots "PRODUCT.INVALID_PRICE" a underscore si tu resx lo requiere
-        // Soporta dos formatos:
-        // - "PRODUCT.INVALID_PRICE"
-        // - "PRODUCT_INVALID_PRICE"
-        string key = code.Replace(".", "_");
-
-        return Messages.ResourceManager.GetString(key)
-            ?? $"Unknown error code: {code}";
-    }
+        => ErrorMessages.Get(code);
 }
-

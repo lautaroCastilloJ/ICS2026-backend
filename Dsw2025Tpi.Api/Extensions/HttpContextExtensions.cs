@@ -1,4 +1,4 @@
-using Dsw2025Tpi.Api.Filters;
+ï»¿using Dsw2025Tpi.Api.Filters;
 
 namespace Dsw2025Tpi.Api.Extensions;
 
@@ -9,7 +9,7 @@ public static class HttpContextExtensions
 {
     /// <summary>
     /// Obtiene el customerId validado por el ValidateCustomerIdAttribute.
-    /// Lanza una excepción si no se encuentra el customerId.
+    /// Lanza una excepciÃ³n si no se encuentra el customerId.
     /// </summary>
     /// <param name="httpContext">El HttpContext actual</param>
     /// <returns>El customerId validado</returns>
@@ -23,7 +23,7 @@ public static class HttpContextExtensions
         }
 
         throw new InvalidOperationException(
-            "CustomerId no encontrado. Asegúrese de que el action esté decorado con [ValidateCustomerId].");
+            "CustomerId no encontrado. AsegÃºrese de que el action estÃ© decorado con [ValidateCustomerId].");
     }
 
     /// <summary>
@@ -31,7 +31,7 @@ public static class HttpContextExtensions
     /// </summary>
     /// <param name="httpContext">El HttpContext actual</param>
     /// <param name="customerId">El customerId validado si existe</param>
-    /// <returns>true si se encontró el customerId, false en caso contrario</returns>
+    /// <returns>true si se encontrÃ³ el customerId, false en caso contrario</returns>
     public static bool TryGetCustomerId(this HttpContext httpContext, out Guid customerId)
     {
         if (httpContext.Items.TryGetValue(ValidateCustomerIdAttribute.CustomerIdKey, out var customerIdObj) 

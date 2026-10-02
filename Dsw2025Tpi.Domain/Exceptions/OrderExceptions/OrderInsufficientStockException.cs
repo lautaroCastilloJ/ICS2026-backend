@@ -4,6 +4,8 @@ namespace Dsw2025Tpi.Domain.Exceptions.OrderExceptions;
 
 public sealed class OrderInsufficientStockException : ExceptionBase
 {
+    public override ErrorType Type => ErrorType.BusinessRule;
+
     public Guid ProductId { get; }
     public string ProductName { get; }
     public int RequestedQuantity { get; }

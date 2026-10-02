@@ -5,6 +5,8 @@ namespace Dsw2025Tpi.Domain.Exceptions.CustomerExceptions;
 
 public sealed class CustomerInactiveException : ExceptionBase
 {
+    public override ErrorType Type => ErrorType.BusinessRule;
+
     public Guid CustomerId { get; }
 
     public CustomerInactiveException(Guid customerId)

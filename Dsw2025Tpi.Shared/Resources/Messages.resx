@@ -231,4 +231,13 @@
   <data name="PRODUCT_INTERNAL_CODE_ALREADY_EXISTS_DISABLED" xml:space="preserve">
     <value>Ya existe un producto deshabilitado con ese código interno.</value>
   </data>
+  <data name="UNEXPECTED_ERROR" xml:space="preserve">
+    <value>Ocurrió un error inesperado. Intente nuevamente más tarde.</value>
+  </data>
+  <data name="VALIDATION_ERROR" xml:space="preserve">
+    <value>Uno o más campos de la solicitud no son válidos.</value>
+  </data>
+  <data name="AUTH_CUSTOMER_NOT_RESOLVED" xml:space="preserve">
+    <value>No se pudo resolver el cliente desde el token.</value>
+  </data>
 </root>

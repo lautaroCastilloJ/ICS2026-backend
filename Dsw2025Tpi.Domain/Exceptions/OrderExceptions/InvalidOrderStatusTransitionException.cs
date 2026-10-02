@@ -5,6 +5,8 @@ namespace Dsw2025Tpi.Domain.Exceptions.OrderExceptions;
 
 public sealed class InvalidOrderStatusTransitionException : ExceptionBase
 {
+    public override ErrorType Type => ErrorType.BusinessRule;
+
     public OrderStatus FromStatus { get; }
     public OrderStatus ToStatus { get; }
 
