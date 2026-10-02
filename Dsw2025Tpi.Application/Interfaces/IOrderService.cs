@@ -7,7 +7,8 @@ namespace Dsw2025Tpi.Application.Interfaces;
 public interface IOrderService
 {
     Task<OrderResponse> CreateOrderAsync(Guid customerId, OrderRequest request);
-    Task<OrderResponse> GetOrderByIdAsync(Guid id);
+    // null se reserva para una consulta autorizada de un administrador.
+    Task<OrderResponse> GetOrderByIdAsync(Guid id, Guid? requestingCustomerId);
     Task<OrderResponse> UpdateOrderStatusAsync(Guid id, string newStatus);
     Task<PagedResult<OrderListItemDto>> GetPagedAsync(
     FilterOrder filter,

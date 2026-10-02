@@ -1,4 +1,5 @@
 using Dsw2025Tpi.Api.Errors;
+using Dsw2025Tpi.Data.Identity;
 using Dsw2025Tpi.Shared.Resources;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -13,9 +14,14 @@ namespace Dsw2025Tpi.Api.Filters;
 public sealed class ValidateCustomerIdAttribute : ActionFilterAttribute
 {
     public const string CustomerIdKey = "ValidatedCustomerId";
+    public bool AllowAdministrator { get; set; }
 
     public override void OnActionExecuting(ActionExecutingContext context)
     {
+        // La excepcion solo se habilita en endpoints que admiten administradores.
+        if (AllowAdministrator && context.HttpContext.User.IsInRole(AppRoles.Administrador))
+            return;
+
         var customerIdClaim = context.HttpContext.User.FindFirst("customerId")?.Value;
 
         if (string.IsNullOrWhiteSpace(customerIdClaim))

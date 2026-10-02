@@ -50,9 +50,13 @@ public class OrdersController : ControllerBase
     // ----------------------------------------------------------------------
     [HttpGet("{id:guid}")]
     [Authorize(Roles = $"{AppRoles.Cliente},{AppRoles.Administrador}")]
+    [ValidateCustomerId(AllowAdministrator = true)]
     public async Task<IActionResult> GetById(Guid id)
     {
-        var result = await _orderService.GetOrderByIdAsync(id);
+        Guid? requestingCustomerId = User.IsInRole(AppRoles.Administrador)
+            ? null
+            : HttpContext.GetCustomerId();
+        var result = await _orderService.GetOrderByIdAsync(id, requestingCustomerId);
         return Ok(result);
     }
 

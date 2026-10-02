@@ -267,4 +267,7 @@
   <data name="AUTH_ADMIN_PASSWORD_TOO_SHORT" xml:space="preserve">
     <value>La contraseña de un administrador debe tener al menos 12 caracteres.</value>
   </data>
+  <data name="RESOURCE_CONCURRENTLY_MODIFIED" xml:space="preserve">
+    <value>Los datos cambiaron mientras se procesaba la operación. Actualice los productos y sus cantidades antes de volver a intentarlo.</value>
+  </data>
 </root>

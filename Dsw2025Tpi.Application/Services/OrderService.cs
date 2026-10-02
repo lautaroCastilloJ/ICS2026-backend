@@ -123,11 +123,12 @@ public sealed class OrderService : IOrderService
     // ===========================================================
     // 2) OBTENER ORDEN POR ID
     // ===========================================================
-    public async Task<OrderResponse> GetOrderByIdAsync(Guid id)
+    public async Task<OrderResponse> GetOrderByIdAsync(Guid id, Guid? requestingCustomerId)
     {
         var order = await _orderRepository.GetById(id, "Items,Customer"); // Include Items y Customer
 
-        if (order is null)
+        // No revelar si una orden ajena existe ni mapear sus datos personales.
+        if (order is null || (requestingCustomerId.HasValue && order.CustomerId != requestingCustomerId.Value))
             throw new OrderNotFoundException(id);
 
         return _mapper.Map<OrderResponse>(order);

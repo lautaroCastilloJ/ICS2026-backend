@@ -31,6 +31,9 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .IsRequired();
 
         builder.Property(p => p.StockQuantity)
+            // UPDATE compara tambien el stock original: dos compras no pueden
+            // sobrescribir el descuento de la otra. No requiere otra columna.
+            .IsConcurrencyToken()
             .IsRequired();
 
         builder.Property(p => p.ImageUrl)

@@ -293,6 +293,7 @@ namespace Dsw2025Tpi.Data.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("StockQuantity")
+                        .IsConcurrencyToken()
                         .HasColumnType("int");
 
                     b.HasKey("Id");

@@ -1,5 +1,6 @@
 ﻿using Dsw2025Tpi.Domain.Entities;
 using Dsw2025Tpi.Domain.Interfaces;
+using Dsw2025Tpi.Shared.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -21,21 +22,21 @@ public class EfRepository<T> : IRepository<T> where T : EntityBase
     public async Task<T> Add(T entity)
     {
         await _context.AddAsync(entity);
-        await _context.SaveChangesAsync();
+        await SaveChangesAsync();
         return entity;
     }
 
     public async Task<T> Update(T entity)
     {
         _context.Update(entity);
-        await _context.SaveChangesAsync();
+        await SaveChangesAsync();
         return entity;
     }
 
     public async Task<T> Delete(T entity)
     {
         _context.Remove(entity);
-        await _context.SaveChangesAsync();
+        await SaveChangesAsync();
         return entity;
     }
 
@@ -67,6 +68,22 @@ public class EfRepository<T> : IRepository<T> where T : EntityBase
     public IQueryable<T> GetAllQueryable(params string[] include)
     {
         return Include(_context.Set<T>(), include);
+    }
+
+    private async Task SaveChangesAsync()
+    {
+        try
+        {
+            // Una transaccion incluye la orden y TODOS los descuentos trackeados.
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            // EF revierte la transaccion. No reintentar una compra con los
+            // valores obsoletos ni dejar cambios pendientes en este contexto.
+            _context.ChangeTracker.Clear();
+            throw new ConcurrentUpdateException(ex);
+        }
     }
 
     private static IQueryable<T> Include(IQueryable<T> query, string[] includes)
