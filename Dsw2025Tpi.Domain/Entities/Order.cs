@@ -1,6 +1,7 @@
 ﻿using Dsw2025Tpi.Domain.Enums;
 using Dsw2025Tpi.Shared.Exceptions;
 using Dsw2025Tpi.Domain.Exceptions.OrderExceptions;
+using Dsw2025Tpi.Domain.ValueObjects;
 
 
 namespace Dsw2025Tpi.Domain.Entities;
@@ -8,8 +9,8 @@ namespace Dsw2025Tpi.Domain.Entities;
 public sealed class Order : EntityBase
 {
     public DateTime Date { get; private set; }
-    public string ShippingAddress { get; private set; }
-    public string BillingAddress { get; private set; }
+    public Address ShippingAddress { get; private set; }
+    public Address BillingAddress { get; private set; }
     public string? Notes { get; private set; }
     public OrderStatus Status { get; private set; }
     public Guid CustomerId { get; private set; } // FK
@@ -24,7 +25,7 @@ public sealed class Order : EntityBase
 
     private Order() { } // for EF
 
-    private Order(Guid customerId, string shippingAddress, string billingAddress, string notes)
+    private Order(Guid customerId, Address shippingAddress, Address billingAddress, string notes)
     {
         if (customerId == Guid.Empty)
             throw new InvalidOrderCustomerException();
@@ -39,8 +40,8 @@ public sealed class Order : EntityBase
 
     public static Order Create(
         Guid customerId,
-        string shippingAddress,
-        string billingAddress,
+        Address shippingAddress,
+        Address billingAddress,
         string? notes)
     {
         return new Order(customerId, shippingAddress, billingAddress, notes ?? string.Empty);
@@ -143,20 +144,15 @@ public sealed class Order : EntityBase
             throw new InvalidOrderStatusTransitionException(Status, Status);
     }
 
-    private void SetShippingAddress(string address)
+    // Address ya se valida al crearse: aca solo se exige que este presente.
+    private void SetShippingAddress(Address? address)
     {
-        if (string.IsNullOrWhiteSpace(address))
-            throw new InvalidOrderShippingAddressException();
-
-        ShippingAddress = address.Trim();
+        ShippingAddress = address ?? throw new InvalidOrderShippingAddressException();
     }
 
-    private void SetBillingAddress(string address)
+    private void SetBillingAddress(Address? address)
     {
-        if (string.IsNullOrWhiteSpace(address))
-            throw new InvalidOrderBillingAddressException();
-
-        BillingAddress = address.Trim();
+        BillingAddress = address ?? throw new InvalidOrderBillingAddressException();
     }
 
     private void SetNotes(string notes)

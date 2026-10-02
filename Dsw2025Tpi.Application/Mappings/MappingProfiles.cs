@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Dsw2025Tpi.Application.Dtos.Orders;
+using Dsw2025Tpi.Domain.ValueObjects;
 using Dsw2025Tpi.Application.Dtos.Products;
 using Dsw2025Tpi.Domain.Entities;
 
@@ -30,6 +31,8 @@ public class MappingProfiles : Profile
             .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.Customer != null ? src.Customer.Name : "N/A"));
 
         CreateMap<OrderItem, OrderItemResponse>();
+
+        CreateMap<Address, AddressDto>();
 
         // OrderListItemDto mapping
         CreateMap<Order, OrderListItemDto>()

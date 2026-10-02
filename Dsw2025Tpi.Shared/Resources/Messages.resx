@@ -240,4 +240,19 @@
   <data name="AUTH_CUSTOMER_NOT_RESOLVED" xml:space="preserve">
     <value>No se pudo resolver el cliente desde el token.</value>
   </data>
+  <data name="ADDRESS_INVALID_STREET" xml:space="preserve">
+    <value>La calle de la dirección no es válida. Debe ser un valor no vacío de hasta 150 caracteres.</value>
+  </data>
+  <data name="ADDRESS_INVALID_NUMBER" xml:space="preserve">
+    <value>La altura de la dirección no es válida. Debe ser un valor no vacío de hasta 10 caracteres (use &quot;S/N&quot; si no tiene).</value>
+  </data>
+  <data name="ADDRESS_INVALID_CITY" xml:space="preserve">
+    <value>La ciudad de la dirección no es válida. Debe ser un valor no vacío de hasta 100 caracteres.</value>
+  </data>
+  <data name="ADDRESS_INVALID_PROVINCE" xml:space="preserve">
+    <value>La provincia de la dirección no es válida. Debe ser un valor no vacío de hasta 100 caracteres.</value>
+  </data>
+  <data name="ADDRESS_INVALID_POSTAL_CODE" xml:space="preserve">
+    <value>El código postal no es válido. Debe tener 4 dígitos (ej. 4000) o formato CPA (ej. T4000ABC).</value>
+  </data>
 </root>

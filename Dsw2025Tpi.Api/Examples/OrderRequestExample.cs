@@ -8,8 +8,20 @@ public class OrderRequestExample : IExamplesProvider<OrderRequest>
     public OrderRequest GetExamples()
     {
         return new OrderRequest(
-            ShippingAddress: "Calle: , Altura: , Ciudad: San Miguel de Tucumán, Provincia: Tucumán",
-            BillingAddress: "Calle: , Altura: , Ciudad: San Miguel de Tucumán, Provincia: Tucumán",
+            ShippingAddress: new AddressDto(
+                Street: "Av. Mate de Luna",
+                Number: "1850",
+                City: "San Miguel de Tucumán",
+                Province: "Tucumán",
+                PostalCode: "4000"
+            ),
+            BillingAddress: new AddressDto(
+                Street: "San Martín",
+                Number: "450",
+                City: "San Miguel de Tucumán",
+                Province: "Tucumán",
+                PostalCode: "T4000ABC"
+            ),
             Notes: "Entregar después de las 18:00",
             OrderItems: new List<OrderItemRequest>
             {

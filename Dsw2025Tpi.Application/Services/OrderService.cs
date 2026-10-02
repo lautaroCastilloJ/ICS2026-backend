@@ -9,6 +9,7 @@ using Dsw2025Tpi.Domain.Exceptions.CustomerExceptions;
 using Dsw2025Tpi.Domain.Exceptions.OrderExceptions;
 using Dsw2025Tpi.Domain.Exceptions.ProductExceptions;
 using Dsw2025Tpi.Domain.Interfaces;
+using Dsw2025Tpi.Domain.ValueObjects;
 
 namespace Dsw2025Tpi.Application.Services;
 
@@ -88,8 +89,8 @@ public sealed class OrderService : IOrderService
         // Crear orden
         var order = Order.Create(
             customerId,
-            request.ShippingAddress,
-            request.BillingAddress,
+            ToAddress(request.ShippingAddress),
+            ToAddress(request.BillingAddress),
             request.Notes
         );
 
@@ -216,17 +217,21 @@ public sealed class OrderService : IOrderService
             {
                 query = query.Where(o =>
                        o.Id.ToString().Contains(searchTerm) 
-                    || o.ShippingAddress.ToLower().Contains(searchTerm)
-                    || o.BillingAddress.ToLower().Contains(searchTerm)
+                    || o.ShippingAddress.Street.ToLower().Contains(searchTerm)
+                    || o.ShippingAddress.City.ToLower().Contains(searchTerm)
+                    || o.BillingAddress.Street.ToLower().Contains(searchTerm)
+                    || o.BillingAddress.City.ToLower().Contains(searchTerm)
                     || (o.Notes != null && o.Notes.ToLower().Contains(searchTerm)));
             }
             else
             {
                 // Para admin: buscar también en nombre de cliente
                 query = query.Where(o =>
-                       o.ShippingAddress.ToLower().Contains(searchTerm)
+                       o.ShippingAddress.Street.ToLower().Contains(searchTerm)
+                    || o.ShippingAddress.City.ToLower().Contains(searchTerm)
                     || o.Id.ToString().Contains(searchTerm)
-                    || o.BillingAddress.ToLower().Contains(searchTerm)
+                    || o.BillingAddress.Street.ToLower().Contains(searchTerm)
+                    || o.BillingAddress.City.ToLower().Contains(searchTerm)
                     || (o.Notes != null && o.Notes.ToLower().Contains(searchTerm))
                     || (o.Customer != null && o.Customer.Name.ToLower().Contains(searchTerm)));
             }
@@ -259,4 +264,8 @@ public sealed class OrderService : IOrderService
             pageSize
         );
     }
+
+    // Traduce el DTO de entrada al Value Object de dominio, que se valida a si mismo.
+    private static Address ToAddress(AddressDto dto)
+        => Address.Create(dto.Street, dto.Number, dto.City, dto.Province, dto.PostalCode);
 }

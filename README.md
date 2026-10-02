@@ -29,3 +29,40 @@ Del relevamiento preliminar se identificaron los siguientes requisitos:
 
 - Lenguaje: C# 12.0
 - Plataforma: .NET 8
+
+## Configuración local
+
+Los secretos **no** se versionan. `appsettings.json` solo contiene valores no sensibles
+(`Jwt:Issuer`, `Jwt:Audience`, `Jwt:ExpireInMinutes`). La API no arranca si faltan
+`ConnectionStrings:DefaultConnection` o `Jwt:Key`.
+
+### 1. Secretos de desarrollo (User Secrets)
+
+Desde la carpeta del backend:
+
+```bash
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost;Database=Dsw2025TpiDb;Trusted_Connection=True;TrustServerCertificate=True;" --project Dsw2025Tpi.Api
+
+# Clave JWT: al menos 32 bytes aleatorios (este comando genera 64, en Base64)
+dotnet user-secrets set "Jwt:Key" "$(openssl rand -base64 64 | tr -d '\n')" --project Dsw2025Tpi.Api
+```
+
+En PowerShell, la clave se puede generar con:
+`[Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(64))`
+
+Los valores quedan en `%APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json`, fuera del repositorio.
+
+### 2. Configuración de desarrollo opcional
+
+`appsettings.Development.json` está en `.gitignore`. Para crearlo, copiar `Dsw2025Tpi.Api/appsettings.Development.example.json`.
+
+### 3. Base de datos
+
+```bash
+dotnet ef database update --project Dsw2025Tpi.Data --startup-project Dsw2025Tpi.Api
+```
+
+### Producción
+
+Usar variables de entorno (`ConnectionStrings__DefaultConnection`, `Jwt__Key`) o un gestor de
+secretos como Azure Key Vault. Nunca reutilizar la clave de desarrollo.

@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 namespace Dsw2025Tpi.Application.Dtos.Orders;
 
 public sealed record OrderRequest(
-    string ShippingAddress,
-    string BillingAddress,
+    AddressDto ShippingAddress,
+    AddressDto BillingAddress,
     string? Notes,
     IEnumerable<OrderItemRequest> OrderItems
 );

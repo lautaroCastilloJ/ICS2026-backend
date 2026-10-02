@@ -8,12 +8,12 @@ public sealed class OrderRequestValidator : AbstractValidator<OrderRequest>
     public OrderRequestValidator()
     {
         RuleFor(o => o.ShippingAddress)
-            .NotEmpty().WithMessage("La dirección de envío es obligatoria.")
-            .MaximumLength(250).WithMessage("La dirección de envío no puede exceder 250 caracteres.");
+            .NotNull().WithMessage("La dirección de envío es obligatoria.")
+            .SetValidator(new AddressDtoValidator());
 
         RuleFor(o => o.BillingAddress)
-            .NotEmpty().WithMessage("La dirección de facturación es obligatoria.")
-            .MaximumLength(250).WithMessage("La dirección de facturación no puede exceder 250 caracteres.");
+            .NotNull().WithMessage("La dirección de facturación es obligatoria.")
+            .SetValidator(new AddressDtoValidator());
 
         RuleFor(o => o.Notes)
             .MaximumLength(500)

@@ -81,9 +81,17 @@ public class Program
         .AddDefaultTokenProviders();
 
         // ========= JWT Configuration =========
+        // Jwt:Key es un secreto: no esta en appsettings.json (ver README).
+        // HMAC-SHA256 exige una clave de al menos 256 bits (32 bytes).
         var jwtConfig = builder.Configuration.GetSection("Jwt");
-        var keyText = jwtConfig["Key"] ?? throw new ArgumentNullException("JWT Key");
+        var keyText = jwtConfig["Key"];
+        if (string.IsNullOrWhiteSpace(keyText))
+            throw new InvalidOperationException(
+                "Falta la configuracion 'Jwt:Key'. En desarrollo: dotnet user-secrets set \"Jwt:Key\" \"<clave>\" --project Dsw2025Tpi.Api");
+
         var key = Encoding.UTF8.GetBytes(keyText);
+        if (key.Length < 32)
+            throw new InvalidOperationException("'Jwt:Key' debe tener al menos 32 bytes.");
 
         builder.Services.AddAuthentication(options =>
         {
