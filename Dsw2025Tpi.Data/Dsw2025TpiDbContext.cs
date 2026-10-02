@@ -1,22 +1,40 @@
-﻿using Dsw2025Tpi.Data.Identity;
+using Dsw2025Tpi.Data.Configurations;
+using Dsw2025Tpi.Data.Identity;
+using Dsw2025Tpi.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dsw2025Tpi.Data;
 
-public class AuthenticateContext : IdentityDbContext<AppUser>
+/// <summary>
+/// Contexto unico de la aplicacion: entidades de dominio e Identity en la misma
+/// base y el mismo change tracker, de modo que cualquier SaveChanges confirma
+/// ambos grupos de tablas en una sola transaccion.
+/// </summary>
+public class Dsw2025TpiDbContext : IdentityDbContext<AppUser>
 {
-    public AuthenticateContext(DbContextOptions<AuthenticateContext> options)
+    public Dsw2025TpiDbContext(DbContextOptions<Dsw2025TpiDbContext> options)
         : base(options)
     {
-
     }
+
+    public DbSet<Product> Products { get; set; }
+    public DbSet<Order> Orders { get; set; }
+    public DbSet<OrderItem> OrderItems { get; set; }
+    public DbSet<Customer> Customers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
 
+        // ========= Dominio =========
+        builder.ApplyConfiguration(new CustomerConfiguration());
+        builder.ApplyConfiguration(new ProductConfiguration());
+        builder.ApplyConfiguration(new OrderConfiguration());
+        builder.ApplyConfiguration(new OrderItemConfiguration());
+
+        // ========= Identity =========
         builder.Entity<AppUser>(b =>
         {
             b.ToTable("Usuarios");
@@ -42,6 +60,4 @@ public class AuthenticateContext : IdentityDbContext<AppUser>
         builder.Entity<IdentityRoleClaim<string>>(b => { b.ToTable("RolesClaims"); });
         builder.Entity<IdentityUserToken<string>>(b => { b.ToTable("UsuariosTokens"); });
     }
-
-
 }

@@ -12,16 +12,13 @@ namespace Dsw2025Tpi.Application.Services;
 public sealed class ProductService : IProductService
 {
     private readonly IRepository<Product> _productRepository;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
 
     public ProductService(
         IRepository<Product> productRepository,
-        IUnitOfWork unitOfWork,
         IMapper mapper)
     {
         _productRepository = productRepository;
-        _unitOfWork = unitOfWork;
         _mapper = mapper;
     }
 
@@ -73,7 +70,6 @@ public sealed class ProductService : IProductService
             request.ImageUrl);
 
         await _productRepository.Add(product);
-        await _unitOfWork.SaveChangesAsync();
 
         return _mapper.Map<ProductResponse>(product);
     }
@@ -199,7 +195,6 @@ public sealed class ProductService : IProductService
             request.ImageUrl);
 
         await _productRepository.Update(product);
-        await _unitOfWork.SaveChangesAsync();
 
         return _mapper.Map<ProductResponse>(product);
     }
@@ -217,7 +212,6 @@ public sealed class ProductService : IProductService
         product.Deactivate();
 
         await _productRepository.Update(product);
-        await _unitOfWork.SaveChangesAsync();
     }
 
     // 6) Habilitar producto → PATCH /api/products/{id}/enable
@@ -233,7 +227,6 @@ public sealed class ProductService : IProductService
         product.Activate();
 
         await _productRepository.Update(product);
-        await _unitOfWork.SaveChangesAsync();
     }
 
     // 7) Paginación de productos → GET /api/products/paged?...

@@ -17,20 +17,17 @@ public sealed class OrderService : IOrderService
     private readonly IRepository<Order> _orderRepository;
     private readonly IRepository<Product> _productRepository;
     private readonly IRepository<Customer> _customerRepository;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
 
     public OrderService(
         IRepository<Order> orderRepository,
         IRepository<Product> productRepository,
         IRepository<Customer> customerRepository,
-        IUnitOfWork unitOfWork,
         IMapper mapper)
     {
         _orderRepository = orderRepository;
         _productRepository = productRepository;
         _customerRepository = customerRepository;
-        _unitOfWork = unitOfWork;
         _mapper = mapper;
     }
 
@@ -108,16 +105,16 @@ public sealed class OrderService : IOrderService
                 prod.CurrentUnitPrice
             );
 
+            // Los productos vienen trackeados por el contexto: el descuento de
+            // stock queda pendiente y se confirma junto con el alta de la orden.
             prod.DecreaseStock(itemReq.Quantity);
-            await _productRepository.Update(prod);
         }
 
         order.ValidateHasItems();
-        await _orderRepository.Add(order);
 
-        // Un unico commit para el alta de la orden y el descuento de stock de
-        // todos sus items: si algo falla, no queda stock descontado sin venta.
-        await _unitOfWork.SaveChangesAsync();
+        // Un unico SaveChanges para el alta de la orden y el descuento de stock
+        // de todos sus items: si algo falla, no queda stock descontado sin venta.
+        await _orderRepository.Add(order);
 
         return _mapper.Map<OrderResponse>(order);
     }
@@ -173,7 +170,6 @@ public sealed class OrderService : IOrderService
         }
 
         await _orderRepository.Update(order);
-        await _unitOfWork.SaveChangesAsync();
 
         return _mapper.Map<OrderResponse>(order);
     }

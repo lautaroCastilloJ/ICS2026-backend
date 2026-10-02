@@ -15,7 +15,7 @@ public class UserService : IUserService
     private readonly SignInManager<AppUser> _signInManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IRepository<Customer> _customerRepository;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly Dsw2025TpiDbContext _context;
     private readonly ILogger<UserService> _logger;
 
     public UserService(
@@ -23,14 +23,14 @@ public class UserService : IUserService
         SignInManager<AppUser> signInManager,
         RoleManager<IdentityRole> roleManager,
         IRepository<Customer> customerRepository,
-        IUnitOfWork unitOfWork,
+        Dsw2025TpiDbContext context,
         ILogger<UserService> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _roleManager = roleManager;
         _customerRepository = customerRepository;
-        _unitOfWork = unitOfWork;
+        _context = context;
         _logger = logger;
     }
 
@@ -43,88 +43,91 @@ public class UserService : IUserService
 
         try
         {
-            await _unitOfWork.ExecuteInTransactionAsync(async ct =>
+            // UserManager confirma cada operacion con su propio SaveChanges; la
+            // transaccion explicita agrupa usuario, rol y Customer en un todo o nada.
+            // Si algo lanza, el using la descarta y se revierte.
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+            // Validar que el email no exista
+            var existingUserByEmail = await _userManager.FindByEmailAsync(request.Email);
+            if (existingUserByEmail != null)
             {
-                // Validar que el email no exista
-                var existingUserByEmail = await _userManager.FindByEmailAsync(request.Email);
-                if (existingUserByEmail != null)
-                {
-                    _logger.LogWarning("Intento de registro con email ya existente: {Email}", request.Email);
-                    throw new EmailAlreadyExistsException(request.Email);
-                }
+                _logger.LogWarning("Intento de registro con email ya existente: {Email}", request.Email);
+                throw new EmailAlreadyExistsException(request.Email);
+            }
 
-                // Validar que el username no exista
-                var existingUserByUsername = await _userManager.FindByNameAsync(request.UserName);
-                if (existingUserByUsername != null)
-                {
-                    _logger.LogWarning("Intento de registro con username ya existente: {Username}", request.UserName);
-                    throw new UsernameAlreadyExistsException(request.UserName);
-                }
+            // Validar que el username no exista
+            var existingUserByUsername = await _userManager.FindByNameAsync(request.UserName);
+            if (existingUserByUsername != null)
+            {
+                _logger.LogWarning("Intento de registro con username ya existente: {Username}", request.UserName);
+                throw new UsernameAlreadyExistsException(request.UserName);
+            }
 
-                // 1. Crear AppUser
-                var user = new AppUser
-                {
-                    UserName = request.UserName,
-                    Email = request.Email,
-                    DisplayName = request.DisplayName
-                };
+            // 1. Crear AppUser
+            var user = new AppUser
+            {
+                UserName = request.UserName,
+                Email = request.Email,
+                DisplayName = request.DisplayName
+            };
 
-                _logger.LogDebug("Creando usuario en el sistema de Identity");
-                var result = await _userManager.CreateAsync(user, request.Password);
-                if (!result.Succeeded)
-                {
-                    var errors = string.Join(" | ", result.Errors.Select(e => $"{e.Code}: {e.Description}"));
-                    _logger.LogWarning("Falló la creación del usuario: {Errors}", errors);
-                    throw new UserCreationFailedException(errors);
-                }
+            _logger.LogDebug("Creando usuario en el sistema de Identity");
+            var result = await _userManager.CreateAsync(user, request.Password);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(" | ", result.Errors.Select(e => $"{e.Code}: {e.Description}"));
+                _logger.LogWarning("Falló la creación del usuario: {Errors}", errors);
+                throw new UserCreationFailedException(errors);
+            }
 
-                userId = user.Id;
-                _logger.LogDebug("Usuario creado con ID: {UserId}", userId);
+            userId = user.Id;
+            _logger.LogDebug("Usuario creado con ID: {UserId}", userId);
 
-                // Asignar rol
-                var role = string.IsNullOrWhiteSpace(request.Role) ? AppRoles.Cliente : request.Role;
-                _logger.LogDebug("Asignando rol: {Role}", role);
+            // Asignar rol
+            var role = string.IsNullOrWhiteSpace(request.Role) ? AppRoles.Cliente : request.Role;
+            _logger.LogDebug("Asignando rol: {Role}", role);
+            
+            // Crear el rol si no existe
+            if (!await _roleManager.RoleExistsAsync(role))
+            {
+                _logger.LogInformation("El rol {Role} no existe, creándolo", role);
+                await _roleManager.CreateAsync(new IdentityRole(role));
+            }
+
+            var roleResult = await _userManager.AddToRoleAsync(user, role);
+            if (!roleResult.Succeeded)
+            {
+                var roleErrors = string.Join(" | ", roleResult.Errors.Select(e => $"{e.Code}: {e.Description}"));
+                _logger.LogWarning("Falló la asignación del rol: {Errors}", roleErrors);
+                throw new UserCreationFailedException(roleErrors);
+            }
+
+            _logger.LogDebug("Rol asignado exitosamente");
+
+            // 2. Crear Customer vinculado al AppUser (solo para clientes)
+            if (role.Equals(AppRoles.Cliente, StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogDebug("Creando entidad Customer para usuario cliente");
                 
-                // Crear el rol si no existe
-                if (!await _roleManager.RoleExistsAsync(role))
-                {
-                    _logger.LogInformation("El rol {Role} no existe, creándolo", role);
-                    await _roleManager.CreateAsync(new IdentityRole(role));
-                }
+                var customer = Customer.Create(
+                    request.Email,
+                    request.DisplayName,
+                    request.PhoneNumber
+                );
 
-                var roleResult = await _userManager.AddToRoleAsync(user, role);
-                if (!roleResult.Succeeded)
-                {
-                    var roleErrors = string.Join(" | ", roleResult.Errors.Select(e => $"{e.Code}: {e.Description}"));
-                    _logger.LogWarning("Falló la asignación del rol: {Errors}", roleErrors);
-                    throw new UserCreationFailedException(roleErrors);
-                }
+                await _customerRepository.Add(customer);
+                _logger.LogDebug("Customer creado con ID: {CustomerId}", customer.Id);
 
-                _logger.LogDebug("Rol asignado exitosamente");
+                // 3. Asignar CustomerId al AppUser
+                user.CustomerId = customer.Id;
+                user.PhoneNumber = request.PhoneNumber;
+                await _userManager.UpdateAsync(user);
+                
+                _logger.LogDebug("Usuario actualizado con CustomerId");
+            }
 
-                // 2. Crear Customer vinculado al AppUser (solo para clientes)
-                if (role.Equals(AppRoles.Cliente, StringComparison.OrdinalIgnoreCase))
-                {
-                    _logger.LogDebug("Creando entidad Customer para usuario cliente");
-                    
-                    var customer = Customer.Create(
-                        request.Email,
-                        request.DisplayName,
-                        request.PhoneNumber
-                    );
-
-                    await _customerRepository.Add(customer);
-                    _logger.LogDebug("Customer creado con ID: {CustomerId}", customer.Id);
-
-                    // 3. Asignar CustomerId al AppUser
-                    user.CustomerId = customer.Id;
-                    user.PhoneNumber = request.PhoneNumber;
-                    await _userManager.UpdateAsync(user);
-                    
-                    _logger.LogDebug("Usuario actualizado con CustomerId");
-                }
-
-            }, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Registro completado exitosamente para el usuario: {Username}", request.UserName);
             return userId;

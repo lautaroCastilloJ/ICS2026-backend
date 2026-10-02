@@ -1,4 +1,4 @@
-using Dsw2025Tpi.Api.Configurations;
+﻿using Dsw2025Tpi.Api.Configurations;
 using Dsw2025Tpi.Api.Middlewares;
 using Dsw2025Tpi.Application.Interfaces;
 using Dsw2025Tpi.Application.Services;
@@ -75,7 +75,7 @@ public class Program
                 RequiredUniqueChars = 1
             };
         })
-        .AddEntityFrameworkStores<AuthenticateContext>()
+        .AddEntityFrameworkStores<Dsw2025TpiDbContext>()
         .AddDefaultTokenProviders();
 
         // ========= JWT Configuration =========
@@ -103,8 +103,8 @@ public class Program
         });
 
         // ========= Application Services =========
-        // Registra ambos DbContext (dominio e Identity) sobre una conexion
-        // compartida, los repositorios y la unidad de trabajo.
+        // Registra el DbContext (dominio + Identity), los repositorios y los
+        // servicios de aplicacion.
         builder.Services.AddDomainServices(builder.Configuration);
 
         // ========= JWT Token Service =========

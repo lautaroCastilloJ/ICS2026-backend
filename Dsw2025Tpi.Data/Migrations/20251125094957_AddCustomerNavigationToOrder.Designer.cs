@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Dsw2025Tpi.Data.Migrations
 {
-    [DbContext(typeof(Dsw2025TpiContext))]
+    [DbContext(typeof(Dsw2025TpiDbContext))]
     [Migration("20251125094957_AddCustomerNavigationToOrder")]
     partial class AddCustomerNavigationToOrder
     {

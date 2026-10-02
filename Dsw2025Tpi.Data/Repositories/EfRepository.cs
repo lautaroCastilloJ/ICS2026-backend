@@ -7,34 +7,36 @@ namespace Dsw2025Tpi.Data.Repositories;
 
 public class EfRepository<T> : IRepository<T> where T : EntityBase
 {
-    private readonly Dsw2025TpiContext _context;
+    private readonly Dsw2025TpiDbContext _context;
 
-    public EfRepository(Dsw2025TpiContext context)
+    public EfRepository(Dsw2025TpiDbContext context)
     {
         _context = context;
     }
 
-    // Los metodos de escritura NO confirman: solo registran el cambio en el
-    // contexto. La confirmacion es responsabilidad del caso de uso, a traves de
-    // IUnitOfWork.SaveChangesAsync(). Asi una operacion que toca varias entidades
-    // se guarda entera o no se guarda.
+    // Los metodos de escritura confirman con SaveChangesAsync, que guarda TODOS
+    // los cambios pendientes del change tracker (no solo los de esta entidad) en
+    // una unica transaccion implicita.
 
     public async Task<T> Add(T entity)
     {
         await _context.AddAsync(entity);
+        await _context.SaveChangesAsync();
         return entity;
     }
 
-    public Task<T> Update(T entity)
+    public async Task<T> Update(T entity)
     {
         _context.Update(entity);
-        return Task.FromResult(entity);
+        await _context.SaveChangesAsync();
+        return entity;
     }
 
-    public Task<T> Delete(T entity)
+    public async Task<T> Delete(T entity)
     {
         _context.Remove(entity);
-        return Task.FromResult(entity);
+        await _context.SaveChangesAsync();
+        return entity;
     }
 
     public async Task<T?> GetById(Guid id, params string[] include)
