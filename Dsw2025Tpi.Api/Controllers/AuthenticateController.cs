@@ -2,6 +2,7 @@
 using Dsw2025Tpi.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Dsw2025Tpi.Api.Controllers;
 
@@ -61,5 +62,24 @@ public class AuthenticateController : ControllerBase
         {
             userId
         });
+    }
+
+    // POST /api/auth/change-password -> cambia la contraseña del usuario autenticado
+    [HttpPost("change-password")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        // El usuario sale del token (claim "sub", mapeado a NameIdentifier),
+        // nunca del body: solo se puede cambiar la propia contraseña.
+        var userName = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userName))
+            return Unauthorized();
+
+        await _userService.ChangePasswordAsync(userName, request, cancellationToken);
+
+        return NoContent();
     }
 }

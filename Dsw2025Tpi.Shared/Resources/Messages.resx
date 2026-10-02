@@ -255,4 +255,16 @@
   <data name="ADDRESS_INVALID_POSTAL_CODE" xml:space="preserve">
     <value>El código postal no es válido. Debe tener 4 dígitos (ej. 4000) o formato CPA (ej. T4000ABC).</value>
   </data>
+  <data name="AUTH_ACCOUNT_LOCKED" xml:space="preserve">
+    <value>La cuenta está bloqueada temporalmente por demasiados intentos fallidos. Intente nuevamente en unos minutos.</value>
+  </data>
+  <data name="AUTH_INVALID_CURRENT_PASSWORD" xml:space="preserve">
+    <value>La contraseña actual es incorrecta.</value>
+  </data>
+  <data name="AUTH_PASSWORD_CHANGE_FAILED" xml:space="preserve">
+    <value>No se pudo cambiar la contraseña. Verifique que cumpla con la política de seguridad.</value>
+  </data>
+  <data name="AUTH_ADMIN_PASSWORD_TOO_SHORT" xml:space="preserve">
+    <value>La contraseña de un administrador debe tener al menos 12 caracteres.</value>
+  </data>
 </root>

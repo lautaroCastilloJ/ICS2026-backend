@@ -52,6 +52,28 @@ En PowerShell, la clave se puede generar con:
 
 Los valores quedan en `%APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json`, fuera del repositorio.
 
+### Administradores
+
+El registro público (`POST /api/auth/register`) crea **solo clientes**: no acepta rol.
+
+- **Primer administrador:** al iniciar, la API crea los roles y, si no existe ningún
+  administrador, crea uno con los datos de la sección `SeedAdmin`:
+
+  ```bash
+  dotnet user-secrets set "SeedAdmin:UserName" "admin" --project Dsw2025Tpi.Api
+  dotnet user-secrets set "SeedAdmin:Email" "admin@ejemplo.com" --project Dsw2025Tpi.Api
+  dotnet user-secrets set "SeedAdmin:Password" "<contraseña de 12+ caracteres>" --project Dsw2025Tpi.Api
+  ```
+
+  Si ya existe un administrador, no hace nada.
+- **Más administradores:** los crea un administrador desde el panel (`/admin/users/create`)
+  o con `POST /api/admin/users`, protegido con `[Authorize(Roles = "Administrador")]`.
+  Exige contraseñas de al menos 12 caracteres y deja registro de quién creó a quién.
+- **Bloqueo:** 5 intentos fallidos de login bloquean la cuenta durante 15 minutos.
+- **Cambio de contraseña:** `POST /api/auth/change-password` (usuario autenticado, solo la
+  propia). Pide la contraseña actual; los intentos fallidos suman al bloqueo. En el panel:
+  `/admin/account/password`.
+
 ### 2. Configuración de desarrollo opcional
 
 `appsettings.Development.json` está en `.gitignore`. Para crearlo, copiar `Dsw2025Tpi.Api/appsettings.Development.example.json`.

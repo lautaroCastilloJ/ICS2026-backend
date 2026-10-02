@@ -21,7 +21,7 @@ namespace Dsw2025Tpi.Api;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -76,6 +76,12 @@ public class Program
                 RequireNonAlphanumeric = true,
                 RequiredUniqueChars = 1
             };
+
+            // Bloqueo temporal tras intentos fallidos (frena la fuerza bruta).
+            // Se aplica porque el login usa PasswordSignInAsync(lockoutOnFailure: true).
+            options.Lockout.MaxFailedAccessAttempts = 5;
+            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+            options.Lockout.AllowedForNewUsers = true;
         })
         .AddEntityFrameworkStores<Dsw2025TpiDbContext>()
         .AddDefaultTokenProviders();
@@ -152,6 +158,9 @@ public class Program
 
         var app = builder.Build();
 
+        // Roles y primer administrador (desde la configuracion 'SeedAdmin').
+        await IdentitySeeder.SeedAsync(app.Services);
+
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
@@ -169,6 +178,6 @@ public class Program
         app.MapControllers();
         app.MapHealthChecks("/healthcheck");
 
-        app.Run();
+        await app.RunAsync();
     }
 }

@@ -3,15 +3,13 @@ using FluentValidation;
 
 namespace Dsw2025Tpi.Application.Validators;
 
-public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
+public class CreateAdminRequestValidator : AbstractValidator<CreateAdminRequest>
 {
-    public RegisterRequestValidator()
+    public CreateAdminRequestValidator()
     {
         RuleFor(x => x.UserName).ValidUserName();
-        RuleFor(x => x.Password).ValidPassword();
+        RuleFor(x => x.Password).ValidPassword(UserRules.MinAdminPasswordLength);
         RuleFor(x => x.Email).ValidEmail();
-
-        // DisplayName -> se usa como Name del Customer
         RuleFor(x => x.DisplayName).ValidDisplayName();
     }
 }
