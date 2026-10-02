@@ -9,7 +9,14 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
 {
     public void Configure(EntityTypeBuilder<Order> builder)
     {
-        builder.ToTable("Orders");
+        // Las reglas del Value Object Address tambien en la base: ninguna escritura
+        // por fuera de Address.Create (SQL manual, otro sistema) puede guardar una
+        // direccion invalida.
+        builder.ToTable("Orders", table =>
+        {
+            table.HasCheckConstraint("CK_Orders_ShippingAddress", AddressCheckSql("Shipping"));
+            table.HasCheckConstraint("CK_Orders_BillingAddress", AddressCheckSql("Billing"));
+        });
 
         builder.HasKey(o => o.Id);
 
@@ -42,6 +49,20 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasForeignKey(o => o.CustomerId)
             .OnDelete(DeleteBehavior.Restrict);
     }
+
+    // Mismas reglas que Address.Create:
+    // - calle, altura, ciudad y provincia no pueden quedar en blanco (Create las
+    //   recorta con Trim; los largos maximos ya los imponen las columnas);
+    // - codigo postal de 4 digitos ("4000") o CPA en mayusculas ("T4000ABC").
+    //   Latin1_General_BIN2 compara por codigo de caracter: la intercalacion de
+    //   la base (Modern_Spanish_CI_AS) no distingue mayusculas y aceptaria "t4000abc".
+    private static string AddressCheckSql(string prefix) =>
+        $"LEN(LTRIM(RTRIM([{prefix}Street]))) > 0 " +
+        $"AND LEN(LTRIM(RTRIM([{prefix}Number]))) > 0 " +
+        $"AND LEN(LTRIM(RTRIM([{prefix}City]))) > 0 " +
+        $"AND LEN(LTRIM(RTRIM([{prefix}Province]))) > 0 " +
+        $"AND ([{prefix}PostalCode] COLLATE Latin1_General_BIN2 LIKE '[0-9][0-9][0-9][0-9]' " +
+        $"OR [{prefix}PostalCode] COLLATE Latin1_General_BIN2 LIKE '[A-Z][0-9][0-9][0-9][0-9][A-Z][A-Z][A-Z]')";
 
     private static void ConfigureAddress(ComplexPropertyBuilder<Address> address, string prefix)
     {
