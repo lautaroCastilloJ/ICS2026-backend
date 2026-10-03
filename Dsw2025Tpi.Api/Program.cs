@@ -145,6 +145,11 @@ public class Program
 
         // ========= Authorization =========
         builder.Services.AddAuthorization();
+
+        // ========= Rate Limiting =========
+        // Limite global por IP y politica "auth" para login/registro (ver
+        // RateLimitingExtensions y la seccion RateLimiting de appsettings.json).
+        builder.Services.AddApiRateLimiting(builder.Configuration);
         
         // ========= CORS Configuration =========
         builder.Services.AddCors(options =>
@@ -172,6 +177,10 @@ public class Program
         app.UseMiddleware<ExceptionMiddleware>();
         app.UseHttpsRedirection();
         app.UseCors("PermitirFrontend");
+        // Despues de CORS: el 429 lleva los headers CORS y el frontend puede leer
+        // el mensaje. Antes de la autenticacion: el exceso se rechaza sin gastar
+        // en validar el JWT ni en hashear contraseñas.
+        app.UseRateLimiter();
         app.UseAuthentication();
         app.UseAuthorization();
 

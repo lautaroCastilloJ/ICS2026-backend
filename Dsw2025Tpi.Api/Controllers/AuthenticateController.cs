@@ -1,13 +1,18 @@
-﻿using Dsw2025Tpi.Application.Dtos.Users;
+﻿using Dsw2025Tpi.Api.Configurations;
+using Dsw2025Tpi.Application.Dtos.Users;
 using Dsw2025Tpi.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace Dsw2025Tpi.Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
+// Login, registro y cambio de contraseña validan contraseñas o crean cuentas:
+// limite estricto por IP contra fuerza bruta y altas masivas.
+[EnableRateLimiting(RateLimitPolicies.Auth)]
 public class AuthenticateController : ControllerBase
 {
     private readonly IUserService _userService;

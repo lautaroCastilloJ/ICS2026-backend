@@ -270,4 +270,7 @@
   <data name="RESOURCE_CONCURRENTLY_MODIFIED" xml:space="preserve">
     <value>Los datos cambiaron mientras se procesaba la operación. Actualice los productos y sus cantidades antes de volver a intentarlo.</value>
   </data>
+  <data name="RATE_LIMIT_EXCEEDED" xml:space="preserve">
+    <value>Hiciste demasiados intentos en poco tiempo. Esperá un momento y volvé a intentarlo.</value>
+  </data>
 </root>
