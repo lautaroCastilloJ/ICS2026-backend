@@ -163,3 +163,5 @@ dotnet test
 | `Falta la configuracion 'Jwt:Key'` | Repetí el paso 3 |
 | `dotnet ef` no se reconoce | `dotnet tool install --global dotnet-ef --version 8.*` y reabrí la terminal |
 | `Invalid object name 'X'` | Faltan migraciones: ejecutá el paso 5 |
+
+## Convención de Ramas
