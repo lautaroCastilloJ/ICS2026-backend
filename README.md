@@ -164,4 +164,76 @@ dotnet test
 | `dotnet ef` no se reconoce | `dotnet tool install --global dotnet-ef --version 8.*` y reabrí la terminal |
 | `Invalid object name 'X'` | Faltan migraciones: ejecutá el paso 5 |
 
-## Convención de Ramas
+## 🌿 Convención de ramas
+
+Este repositorio sigue un modelo de ramificación basado en ramas por característica y por corrección. **No se permiten commits directos sobre `main` ni `development`**: todo cambio debe integrarse mediante un Pull Request aprobado por al menos un integrante del equipo distinto del autor.
+
+### Ramas principales
+
+| Rama | Propósito | Protección |
+|---|---|---|
+| `main` | Código en producción, estable y desplegable | PR obligatorio + 1 aprobación |
+| `development` | Integración continua de funcionalidades terminadas | PR obligatorio + 1 aprobación |
+
+### Ramas de trabajo
+
+| Tipo | Formato | Nace de | Se integra en |
+|---|---|---|---|
+| Funcionalidad | `feature/nombre-funcionalidad` | `development` | `development` |
+| Corrección urgente | `hotfix/descripcion` | `main` | `main` y luego `development` |
+
+**Reglas de nomenclatura:**
+- Usar minúsculas y separar palabras con guiones: `feature/carrito-de-compras`.
+- Incluir el ID de la tarjeta de Trello cuando exista: `feature/AT-03-extraer-servicio-pedidos`.
+- Evitar tildes, espacios y caracteres especiales.
+
+### Flujo para una funcionalidad
+
+```bash
+git switch development
+git pull
+git switch -c feature/nombre-funcionalidad
+# ... cambios y commits ...
+git push -u origin feature/nombre-funcionalidad
+```
+
+1. Abrir un Pull Request hacia `development`, con una descripción y el enlace a la tarjeta de Trello.
+2. Solicitar la revisión de un integrante del equipo.
+3. Una vez aprobado, fusionar el PR y eliminar la rama.
+
+### Flujo para una corrección urgente (hotfix)
+
+```bash
+git switch main
+git pull
+git switch -c hotfix/descripcion
+# ... corrección y commits ...
+git push -u origin hotfix/descripcion
+```
+
+1. Abrir un Pull Request hacia `main` y obtener la aprobación de un par.
+2. Fusionar el PR.
+3. Abrir un segundo Pull Request de `main` hacia `development`, para que la corrección no se pierda en la próxima versión.
+
+### Mensajes de commit
+
+Se recomienda el formato *Conventional Commits*: `tipo: descripción breve (ID-tarjeta)`.
+
+| Tipo | Uso |
+|---|---|
+| `feat` | Nueva funcionalidad |
+| `fix` | Corrección de errores |
+| `refactor` | Cambio de código sin alterar el comportamiento |
+| `docs` | Cambios en la documentación |
+| `test` | Agregado o modificación de pruebas |
+| `chore` | Tareas de mantenimiento o configuración |
+
+Ejemplo: `fix: corregir cálculo del total del carrito (AT-05)`
+
+### Después de fusionar
+
+```bash
+git switch development
+git pull
+git branch -d feature/nombre-funcionalidad
+```
