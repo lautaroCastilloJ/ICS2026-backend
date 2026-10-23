@@ -34,7 +34,7 @@ public class Program
         {
             o.SwaggerDoc("v1", new OpenApiInfo
             {
-                Title = "Desarrollo de Software",
+                Title = "ICS2026",
                 Version = "v1",
             });
             o.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -161,7 +161,9 @@ public class Program
                       .AllowCredentials());
         });
 
+        //Para arriba registro de Servicios
         var app = builder.Build();
+        //Para abajo configuracion del Pipeline de peticiones
 
         // Roles y primer administrador (desde la configuracion 'SeedAdmin').
         await IdentitySeeder.SeedAsync(app.Services);
@@ -185,7 +187,7 @@ public class Program
         app.UseAuthorization();
 
         app.MapControllers();
-        app.MapHealthChecks("/healthcheck");
+        app.MapHealthChecks("/health");
 
         await app.RunAsync();
     }
