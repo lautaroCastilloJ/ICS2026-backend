@@ -20,7 +20,10 @@ public static class ServiceCollectionExtensions
                 "Falta 'ConnectionStrings:DefaultConnection'. En desarrollo: dotnet user-secrets set \"ConnectionStrings:DefaultConnection\" \"<cadena>\" --project Dsw2025Tpi.Api");
 
         services.AddDbContext<Dsw2025TpiDbContext>(options =>
-            options.UseSqlServer(connectionString));
+                options.UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure(
+                maxRetryCount: 10,
+                maxRetryDelay: TimeSpan.FromSeconds(30),
+                errorNumbersToAdd: null)));
 
         // ========= Application Services =========
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
