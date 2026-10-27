@@ -5,6 +5,7 @@ using Dsw2025Tpi.Domain.Interfaces;
 using Dsw2025Tpi.Domain.Entities;
 using Dsw2025Tpi.Data.Identity.Exceptions;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Dsw2025Tpi.Data.Identity;
@@ -36,36 +37,63 @@ public class UserService : IUserService
         _logger.LogInformation("Iniciando registro para el usuario: {Username}, Email: {Email}",
             request.UserName, request.Email);
 
-        // UserManager confirma cada operacion con su propio SaveChanges; la
-        // transaccion explicita agrupa usuario, rol y Customer en un todo o nada.
-        // Si algo lanza, el using la descarta y se revierte.
-        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        // Con reintentos ante fallos transitorios (EnableRetryOnFailure), una transaccion
+        // manual debe ejecutarse dentro de la estrategia de ejecucion: si falla, se
+        // repite el bloque completo como una unidad.
+        var strategy = _context.Database.CreateExecutionStrategy();
+        var attempt = 0;
 
-        // El registro publico SIEMPRE crea clientes: el rol no lo elige quien se registra.
-        var user = await CreateUserAsync(request.UserName, request.Email, request.DisplayName, request.Password, AppRoles.Cliente);
+        var userId = await strategy.ExecuteAsync(async () =>
+        {
+            // En un reintento se descartan las entidades rastreadas del intento fallido,
+            // para no volver a insertar el usuario o el Customer.
+            if (attempt++ > 0)
+                _context.ChangeTracker.Clear();
 
-        // Customer vinculado al AppUser
-        var customer = Customer.Create(request.Email, request.DisplayName, request.PhoneNumber);
-        await _customerRepository.Add(customer);
-        _logger.LogDebug("Customer creado con ID: {CustomerId}", customer.Id);
+            // UserManager confirma cada operacion con su propio SaveChanges; la
+            // transaccion explicita agrupa usuario, rol y Customer en un todo o nada.
+            // Si algo lanza, el using la descarta y se revierte.
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
-        user.CustomerId = customer.Id;
-        user.PhoneNumber = request.PhoneNumber;
-        await _userManager.UpdateAsync(user);
+            // El registro publico SIEMPRE crea clientes: el rol no lo elige quien se registra.
+            var user = await CreateUserAsync(request.UserName, request.Email, request.DisplayName, request.Password, AppRoles.Cliente);
 
-        await transaction.CommitAsync(cancellationToken);
+            // Customer vinculado al AppUser
+            var customer = Customer.Create(request.Email, request.DisplayName, request.PhoneNumber);
+            await _customerRepository.Add(customer);
+            _logger.LogDebug("Customer creado con ID: {CustomerId}", customer.Id);
+
+            user.CustomerId = customer.Id;
+            user.PhoneNumber = request.PhoneNumber;
+            await _userManager.UpdateAsync(user);
+
+            await transaction.CommitAsync(cancellationToken);
+            return user.Id;
+        });
 
         _logger.LogInformation("Registro completado exitosamente para el usuario: {Username}", request.UserName);
-        return user.Id;
+        return userId;
     }
 
     public async Task<string> CreateAdminAsync(CreateAdminRequest request, string createdBy, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        // Misma estrategia de ejecucion que en RegisterAsync: la transaccion se
+        // repite completa si la base falla de forma transitoria.
+        var strategy = _context.Database.CreateExecutionStrategy();
+        var attempt = 0;
 
-        var user = await CreateUserAsync(request.UserName, request.Email, request.DisplayName, request.Password, AppRoles.Administrador);
+        var user = await strategy.ExecuteAsync(async () =>
+        {
+            if (attempt++ > 0)
+                _context.ChangeTracker.Clear();
 
-        await transaction.CommitAsync(cancellationToken);
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+            var createdUser = await CreateUserAsync(request.UserName, request.Email, request.DisplayName, request.Password, AppRoles.Administrador);
+
+            await transaction.CommitAsync(cancellationToken);
+            return createdUser;
+        });
 
         // Auditoria: queda registrado quien otorgo privilegios de administrador.
         _logger.LogWarning("Administrador {NewAdmin} (ID: {UserId}) creado por {CreatedBy}",

@@ -22,7 +22,7 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      # 3. Ejecutar las pruebas (desactivado temporalmente según guía - registrado como deuda técnica)
+      # 3. Ejecutar las pruebas (desactivado temporalmente - registrado como deuda técnica)
       # - name: 3. Ejecutar las pruebas
       #   run: dotnet test Dsw2025Tpi.sln -c Release
 
@@ -45,3 +45,11 @@ jobs:
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: 7. Desplegar el contenedor en Azure App Service
+        if: github.event_name != 'pull_request'
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.APP_SERVICE_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
