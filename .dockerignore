@@ -7,4 +7,5 @@
 .env
 Dsw2025Tpi.Tests/
 test/
+tests/
 *.md

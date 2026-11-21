@@ -34,6 +34,20 @@ public class Dsw2025TpiDbContext : IdentityDbContext<AppUser>
         builder.ApplyConfiguration(new OrderConfiguration());
         builder.ApplyConfiguration(new OrderItemConfiguration());
 
+        // Los CHECK de las direcciones (OrderConfiguration) estan escritos en T-SQL
+        // (LEN, COLLATE Latin1_General_BIN2) y otros motores no pueden ni crear la
+        // tabla. Fuera de SQL Server (SQLite en las pruebas de integracion) se
+        // quitan; Address.Create sigue validando lo mismo en el dominio.
+        // Las migraciones no cambian: dotnet ef construye el modelo con SQL Server.
+        if (!Database.IsSqlServer())
+        {
+            foreach (var entity in builder.Model.GetEntityTypes())
+            {
+                foreach (var check in entity.GetCheckConstraints().ToList())
+                    entity.RemoveCheckConstraint(check.ModelName);
+            }
+        }
+
         // ========= Identity =========
         builder.Entity<AppUser>(b =>
         {

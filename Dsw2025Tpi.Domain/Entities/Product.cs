@@ -1,4 +1,5 @@
-﻿using Dsw2025Tpi.Domain.Exceptions.ProductExceptions;
+﻿using System.Diagnostics.CodeAnalysis;
+using Dsw2025Tpi.Domain.Exceptions.ProductExceptions;
 
 namespace Dsw2025Tpi.Domain.Entities;
 
@@ -13,7 +14,14 @@ public sealed class Product : EntityBase
     public string? ImageUrl { get; private set; }
     public bool IsActive { get; private set; }
 
-    private Product() { } // EF Core
+    // Ctor para EF Core: los valores reales los carga EF desde la base.
+    private Product()
+    {
+        Sku = null!;
+        InternalCode = null!;
+        Name = null!;
+        Description = null!;
+    }
 
     private Product(
         string sku,
@@ -116,6 +124,7 @@ public sealed class Product : EntityBase
             throw new ProductInactiveException();
     }
 
+    [MemberNotNull(nameof(Sku))]
     private void SetSku(string sku)
     {
         if (string.IsNullOrWhiteSpace(sku))
@@ -124,6 +133,7 @@ public sealed class Product : EntityBase
         Sku = sku.Trim();
     }
 
+    [MemberNotNull(nameof(InternalCode))]
     private void SetInternalCode(string internalCode)
     {
         if (string.IsNullOrWhiteSpace(internalCode))
@@ -132,6 +142,7 @@ public sealed class Product : EntityBase
         InternalCode = internalCode.Trim();
     }
 
+    [MemberNotNull(nameof(Name))]
     private void SetName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -140,6 +151,7 @@ public sealed class Product : EntityBase
         Name = name.Trim();
     }
 
+    [MemberNotNull(nameof(Description))]
     private void SetDescription(string desc)
         => Description = desc?.Trim() ?? string.Empty;
 

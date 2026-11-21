@@ -1,4 +1,5 @@
-﻿using Dsw2025Tpi.Domain.Exceptions.CustomerExceptions;
+﻿using System.Diagnostics.CodeAnalysis;
+using Dsw2025Tpi.Domain.Exceptions.CustomerExceptions;
 
 
 namespace Dsw2025Tpi.Domain.Entities;
@@ -10,7 +11,12 @@ public sealed class Customer : EntityBase
     public string? PhoneNumber { get; private set; }
     public bool IsActive { get; private set; }
 
-    private Customer() { } // Ctor para EF Core
+    // Ctor para EF Core: los valores reales los carga EF desde la base.
+    private Customer()
+    {
+        Email = null!;
+        Name = null!;
+    }
 
     private Customer(string email, string name, string? phoneNumber)
     {
@@ -23,7 +29,7 @@ public sealed class Customer : EntityBase
     public static Customer Create(string email, string name, string? phoneNumber)
         => new Customer(email, name, phoneNumber);
 
-    
+
     // ----------------- Comportamiento de dominio -----------------
 
     public void UpdateContactInfo(string email, string name, string? phoneNumber)
@@ -77,6 +83,7 @@ public sealed class Customer : EntityBase
             throw new CustomerInactiveException(Id);
     }
 
+    [MemberNotNull(nameof(Email))]
     private void SetEmail(string email)
     {
         if (string.IsNullOrWhiteSpace(email))
@@ -91,6 +98,7 @@ public sealed class Customer : EntityBase
         Email = trimmed;
     }
 
+    [MemberNotNull(nameof(Name))]
     private void SetName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
