@@ -1,4 +1,5 @@
-﻿using Dsw2025Tpi.Domain.Enums;
+﻿using System.Diagnostics.CodeAnalysis;
+using Dsw2025Tpi.Domain.Enums;
 using Dsw2025Tpi.Shared.Exceptions;
 using Dsw2025Tpi.Domain.Exceptions.OrderExceptions;
 using Dsw2025Tpi.Domain.ValueObjects;
@@ -23,7 +24,12 @@ public sealed class Order : EntityBase
 
     public decimal TotalAmount => _items.Sum(i => i.Subtotal); // Derivado: suma de subtotales
 
-    private Order() { } // for EF
+    // Ctor para EF Core: los valores reales los carga EF desde la base.
+    private Order()
+    {
+        ShippingAddress = null!;
+        BillingAddress = null!;
+    }
 
     private Order(Guid customerId, Address shippingAddress, Address billingAddress, string notes)
     {
@@ -115,7 +121,7 @@ public sealed class Order : EntityBase
 
         // No se puede cambiar una orden ya finalizada
         if (Status is OrderStatus.Cancelled or OrderStatus.Delivered)
-            throw new OrderAlreadyFinalizedException(Id, Status, newStatus); 
+            throw new OrderAlreadyFinalizedException(Id, Status, newStatus);
 
         // A partir de cierto estado exigimos que la orden tenga items
         if (newStatus is OrderStatus.Processing or OrderStatus.Shipped or OrderStatus.Delivered)
@@ -145,11 +151,13 @@ public sealed class Order : EntityBase
     }
 
     // Address ya se valida al crearse: aca solo se exige que este presente.
+    [MemberNotNull(nameof(ShippingAddress))]
     private void SetShippingAddress(Address? address)
     {
         ShippingAddress = address ?? throw new InvalidOrderShippingAddressException();
     }
 
+    [MemberNotNull(nameof(BillingAddress))]
     private void SetBillingAddress(Address? address)
     {
         BillingAddress = address ?? throw new InvalidOrderBillingAddressException();
