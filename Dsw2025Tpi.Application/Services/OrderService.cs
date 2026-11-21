@@ -43,7 +43,7 @@ public sealed class OrderService : IOrderService
         // Validar cliente
         var customer = await _customerRepository.GetById(customerId);
         if (customer is null)
-            throw new InvalidOrderCustomerException();
+            throw new CustomerNotFoundException(customerId);
 
         if (!customer.IsActive)
             throw new CustomerInactiveException(customerId);
@@ -217,7 +217,7 @@ public sealed class OrderService : IOrderService
             if (filter.CustomerId.HasValue)
             {
                 query = query.Where(o =>
-                       o.Id.ToString().Contains(searchTerm) 
+                       o.Id.ToString().Contains(searchTerm)
                     || o.ShippingAddress.Street.ToLower().Contains(searchTerm)
                     || o.ShippingAddress.City.ToLower().Contains(searchTerm)
                     || o.BillingAddress.Street.ToLower().Contains(searchTerm)
