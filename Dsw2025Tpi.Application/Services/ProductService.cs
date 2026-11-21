@@ -25,6 +25,13 @@ public sealed class ProductService : IProductService
     // 1) Crear producto  → POST /api/products
     public async Task<ProductResponse> CreateAsync(ProductRequest request)
     {
+        // Reglas de alta (consigna TP4): se validan ANTES de consultar el
+        // repositorio, para no ir a la base con un pedido invalido.
+        if (request.CurrentUnitPrice <= 0)
+            throw new InvalidProductPriceException();
+        if (request.StockQuantity <= 0)
+            throw new InvalidProductStockException();
+
         var skuLower = request.Sku.Trim().ToLowerInvariant();
         var codeLower = request.InternalCode.Trim().ToLowerInvariant();
 
@@ -86,11 +93,12 @@ public sealed class ProductService : IProductService
         // Filtro de búsqueda por SKU y Nombre
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var term = search.Trim();
+            var term = search.Trim().ToLower();
 
             query = query.Where(p =>
-                p.Sku.Contains(term) ||
-                p.Name.Contains(term));
+                p.Sku.ToLower().Contains(term) ||
+                p.InternalCode.ToLower().Contains(term) ||
+                p.Name.ToLower().Contains(term));
         }
 
         // Normalizar paginación
@@ -251,12 +259,12 @@ public sealed class ProductService : IProductService
         // iii) Filtro de búsqueda por SKU, InternalCode y Nombre.
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
-            var term = filter.Search.Trim();
+            var term = filter.Search.Trim().ToLower();
 
             query = query.Where(p =>
-                p.Sku.Contains(term) ||
-                p.InternalCode.Contains(term) ||
-                p.Name.Contains(term));
+                p.Sku.ToLower().Contains(term) ||
+                p.InternalCode.ToLower().Contains(term) ||
+                p.Name.ToLower().Contains(term));
         }
 
         // iv) Normalizar paginación

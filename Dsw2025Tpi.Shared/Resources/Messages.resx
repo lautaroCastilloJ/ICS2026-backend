@@ -273,4 +273,7 @@
   <data name="RATE_LIMIT_EXCEEDED" xml:space="preserve">
     <value>Hiciste demasiados intentos en poco tiempo. Esperá un momento y volvé a intentarlo.</value>
   </data>
+  <data name="CUSTOMER_NOT_FOUND" xml:space="preserve">
+    <value>El cliente indicado no existe.</value>
+  </data>
 </root>
