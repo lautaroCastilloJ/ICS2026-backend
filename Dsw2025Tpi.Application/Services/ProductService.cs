@@ -25,6 +25,13 @@ public sealed class ProductService : IProductService
     // 1) Crear producto  → POST /api/products
     public async Task<ProductResponse> CreateAsync(ProductRequest request)
     {
+        // Reglas de alta (consigna TP4): se validan ANTES de consultar el
+        // repositorio, para no ir a la base con un pedido invalido.
+        if (request.CurrentUnitPrice <= 0)
+            throw new InvalidProductPriceException();
+        if (request.StockQuantity <= 0)
+            throw new InvalidProductStockException();
+
         var skuLower = request.Sku.Trim().ToLowerInvariant();
         var codeLower = request.InternalCode.Trim().ToLowerInvariant();
 
