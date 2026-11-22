@@ -83,7 +83,7 @@ public sealed class ProductService : IProductService
 
 
     // 2) Obtener todos los productos activos con paginación → GET /api/products
-    public async Task<PagedResult<ProductResponse>> GetAllAsync(int pageNumber = 1, int pageSize = 10, string? search = null)
+    public Task<PagedResult<ProductResponse>> GetAllAsync(int pageNumber = 1, int pageSize = 10, string? search = null)
     {
         var query = _productRepository.GetAllQueryable();
 
@@ -128,11 +128,13 @@ public sealed class ProductService : IProductService
             .Select(p => _mapper.Map<ProductResponse>(p))
             .ToList();
 
-        return PagedResult<ProductResponse>.Create(
+        var result = PagedResult<ProductResponse>.Create(
             dtoItems,
             totalCount,
             pageNumber,
             pageSize);
+
+        return Task.FromResult(result);
     }
 
     // 3) Obtener producto por Id → GET /api/products/{id}
