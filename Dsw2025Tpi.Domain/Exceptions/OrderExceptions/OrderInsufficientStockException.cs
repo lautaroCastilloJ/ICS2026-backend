@@ -4,7 +4,8 @@ namespace Dsw2025Tpi.Domain.Exceptions.OrderExceptions;
 
 public sealed class OrderInsufficientStockException : ExceptionBase
 {
-    public override ErrorType Type => ErrorType.BusinessRule;
+    // 400 (consigna TP4): el pedido supera el stock disponible.
+    public override ErrorType Type => ErrorType.Validation;
 
     public Guid ProductId { get; }
     public string ProductName { get; }
@@ -16,7 +17,9 @@ public sealed class OrderInsufficientStockException : ExceptionBase
         string productName,
         int requestedQuantity,
         int availableQuantity)
-        : base("ORDER_INSUFFICIENT_STOCK")
+        : base("ORDER_INSUFFICIENT_STOCK",
+            $"Stock insuficiente para '{productName}': se pidieron {requestedQuantity} " +
+            $"unidades y hay {availableQuantity} disponibles.")
     {
         ProductId = productId;
         ProductName = productName;
