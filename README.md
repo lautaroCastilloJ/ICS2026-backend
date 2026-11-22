@@ -22,7 +22,10 @@ Dsw2025Tpi.sln
 ├── Dsw2025Tpi.Domain       → Entidades y reglas de negocio
 ├── Dsw2025Tpi.Data         → DbContext, Migrations, Identity, Repositorios
 ├── Dsw2025Tpi.Shared       → Utilidades comunes
-└── Dsw2025Tpi.Tests        → Tests
+├── Dsw2025Tpi.Tests        → Pruebas previas (TP3): rate limiting y seguridad de órdenes
+└── tests/
+    ├── Dsw2025Tpi.UnitTests         → Pruebas unitarias (xUnit + Moq)
+    └── Dsw2025Tpi.IntegrationTests  → Pruebas de integración y E2E de API (SQLite en memoria)
 ```
 
 ## 🚀 Puesta en marcha
@@ -158,12 +161,22 @@ dotnet ef database update --project Dsw2025Tpi.Data --startup-project Dsw2025Tpi
 ## 🧪 Tests
 
 ```bash
-dotnet test
+# Unitarias (xUnit + Moq)
+dotnet test tests/Dsw2025Tpi.UnitTests
+
+# Integración y E2E de API (WebApplicationFactory + SQLite en memoria)
+dotnet test tests/Dsw2025Tpi.IntegrationTests
+
+# Pruebas previas que no requieren SQL Server
+dotnet test Dsw2025Tpi.Tests --filter "Category!=RequiresSqlServer"
 ```
 
-> ⚠️ Las pruebas de integración usan un SQL Server real: requieren una base configurada en la
-> máquina donde se ejecutan. Por ese motivo están desactivadas temporalmente en el pipeline de CI
-> (registrado como deuda técnica).
+Las pruebas unitarias y de integración no necesitan SQL Server ni secretos. Las de `OrdersSafetyTests`
+están marcadas con `Category=RequiresSqlServer` porque usan un SQL Server real: se excluyen del pipeline y
+solo se ejecutan a mano con una base configurada (`dotnet test Dsw2025Tpi.Tests`).
+
+El pipeline ejecuta estos tres comandos en el job `run-tests` antes de construir y desplegar la imagen
+(ver [Pipeline CI/CD](#-pipeline-cicd-github-actions)).
 
 ## 🩺 Problemas comunes
 
@@ -183,8 +196,8 @@ Este repositorio sigue un modelo de ramificación basado en ramas por caracterí
 
 | Rama | Propósito | Protección |
 |---|---|---|
-| `main` | Código en producción, estable y desplegable | PR obligatorio + 1 aprobación + check `build-and-deploy` |
-| `development` | Integración continua de funcionalidades terminadas | PR obligatorio + 1 aprobación + check `build-and-deploy` |
+| `main` | Código en producción, estable y desplegable | PR obligatorio + 1 aprobación + checks `run-tests` y `build-and-deploy` |
+| `development` | Integración continua de funcionalidades terminadas | PR obligatorio + 1 aprobación + checks `run-tests` y `build-and-deploy` |
 
 ### Ramas de trabajo
 
@@ -374,27 +387,36 @@ docker rm -f mi-api-backend
 
 ## 🚀 Pipeline CI/CD (GitHub Actions)
 
-El workflow `.github/workflows/deploy.yml` construye la imagen Docker de la API, la publica en Docker Hub y la despliega en Azure App Service.
+El workflow `.github/workflows/deploy.yml` ejecuta la suite de pruebas como *Quality Gate* y, solo si pasa, construye la imagen Docker de la API, la publica en Docker Hub y la despliega en Azure App Service.
 
 ### Cuándo se ejecuta
 
 | Evento | Qué hace | Propósito |
 |---|---|---|
-| `pull_request` hacia `development` o `main` | Compila y construye la imagen, **sin publicarla** | Validar el cambio antes de fusionar (CI) |
-| `push` a `development` o `main` (al fusionar un PR) | Construye, publica en Docker Hub y despliega en Azure | Entregar la versión aprobada (CD) |
+| `pull_request` hacia `development` o `main` | Ejecuta las pruebas y construye la imagen, **sin publicarla** | Validar el cambio antes de fusionar (CI) |
+| `push` a `development` o `main` (al fusionar un PR) | Ejecuta las pruebas, construye, publica en Docker Hub y despliega en Azure | Entregar la versión aprobada (CD) |
 | `workflow_dispatch` (*Actions → Run workflow*) | Igual que un push, sobre la rama elegida | Despliegue manual o verificación en QA |
 
 Como `development` y `main` están protegidas, el evento `push` solo ocurre al fusionar un Pull Request aprobado.
 
-### Pasos del pipeline
+### Jobs del pipeline
 
-1. **Obtener el código** de la rama.
-2. **Instalar .NET 8.**
-3. **Ejecutar las pruebas** *(desactivado temporalmente; registrado como deuda técnica)*.
-4. **Construir la imagen Docker**, etiquetada con el SHA del commit y con `latest`.
-5. **Iniciar sesión en Docker Hub** *(solo fuera de los PR)*.
-6. **Subir la imagen a Docker Hub** *(solo fuera de los PR)*.
-7. **Desplegar el contenedor en Azure App Service** con la imagen del SHA *(solo fuera de los PR)*.
+El workflow tiene dos jobs. `build-and-deploy` declara `needs: run-tests`: si falla cualquier prueba, GitHub lo marca como *skipped* y no se construye, publica ni despliega la imagen.
+
+**1. `run-tests` (Quality Gate)**
+
+1. **Obtener el código** de la rama e **instalar .NET 8.**
+2. **Restaurar y compilar** la solución en Release.
+3. **Ejecutar las pruebas por nivel**: unitarias, integración/E2E y las previas que no requieren SQL Server. Cada nivel corre aunque falle el anterior, para reportar todos los fallos en una sola ejecución.
+4. **Publicar los resultados** (`.trx`) como artefacto `test-results`, también cuando fallan.
+5. **Notificar el fallo** con una anotación `::error` y un resumen en la página de la ejecución.
+
+**2. `build-and-deploy`** *(solo si `run-tests` terminó en verde)*
+
+1. **Construir la imagen Docker**, etiquetada con el SHA del commit y con `latest`.
+2. **Iniciar sesión en Docker Hub** *(solo fuera de los PR)*.
+3. **Subir la imagen a Docker Hub** *(solo fuera de los PR)*.
+4. **Desplegar el contenedor en Azure App Service** con la imagen del SHA *(solo fuera de los PR)*.
 
 Etiquetar la imagen con el SHA del commit permite rastrear qué código está desplegado y volver a una versión anterior desplegando su etiqueta.
 
@@ -411,7 +433,9 @@ Configurados en *Settings → Secrets and variables → Actions*. Solo el dueño
 
 ### Protección asociada
 
-El ruleset `protection-main-development` exige, para fusionar en `development` o `main`, la aprobación de al menos un integrante distinto del autor y que el check **`build-and-deploy`** termine con éxito.
+El ruleset `protection-main-development` exige, para fusionar en `development` o `main`, la aprobación de al menos un integrante distinto del autor y que los checks **`run-tests`** y **`build-and-deploy`** terminen con éxito.
+
+> ℹ️ Exigir `run-tests` es indispensable: cuando las pruebas fallan, `build-and-deploy` queda *skipped*, y GitHub no bloquea el merge por un check requerido omitido.
 
 ---
 
