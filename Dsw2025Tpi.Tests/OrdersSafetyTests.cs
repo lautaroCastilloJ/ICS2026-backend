@@ -12,6 +12,8 @@ using Xunit;
 
 namespace Dsw2025Tpi.Tests;
 
+// Requieren un SQL Server real (OrdersDatabaseFixture): el pipeline las excluye.
+[Trait("Category", "RequiresSqlServer")]
 public sealed class OrdersSafetyTests : IClassFixture<OrdersDatabaseFixture>
 {
     private readonly OrdersDatabaseFixture _fixture;
