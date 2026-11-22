@@ -1,4 +1,4 @@
-name: CI/CD - Build and Deploy to Azure App Service
+name: CI/CD - Test, Build and Deploy to Azure App Service
 
 on:
   push:
@@ -11,7 +11,13 @@ env:
   IMAGE_NAME: dsw2025tpi-api
 
 jobs:
-  build-and-deploy:
+  # ==================================================================
+  # JOB 1: Quality Gate. Si falla cualquier prueba, este job termina en
+  # rojo y build-and-deploy NO se ejecuta (needs: run-tests).
+  # Sin "name:" a proposito: el check se llama "run-tests" y ese es el
+  # nombre que se exige en el ruleset.
+  # ==================================================================
+  run-tests:
     runs-on: ubuntu-latest
     steps:
       - name: 1. Obtener el código
@@ -22,31 +28,81 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      # 3. Ejecutar las pruebas (desactivado temporalmente - registrado como deuda técnica)
-      # - name: 3. Ejecutar las pruebas
-      #   run: dotnet test Dsw2025Tpi.sln -c Release
+      - name: 3. Restaurar dependencias
+        run: dotnet restore Dsw2025Tpi.sln
 
-      - name: 4. Construir la imagen Docker
+      - name: 4. Compilar (Release)
+        run: dotnet build Dsw2025Tpi.sln -c Release --no-restore
+
+      - name: 5. Pruebas unitarias
+        run: >
+          dotnet test tests/Dsw2025Tpi.UnitTests -c Release --no-build
+          --logger "trx;LogFileName=unit.trx" --results-directory TestResults
+
+      # !cancelled(): corre aunque haya fallado el nivel anterior, para
+      # reportar TODOS los fallos en una sola ejecucion. El job igual
+      # termina en rojo si fallo cualquier paso.
+      - name: 6. Pruebas de integración y E2E (SQLite)
+        if: ${{ !cancelled() }}
+        run: >
+          dotnet test tests/Dsw2025Tpi.IntegrationTests -c Release --no-build
+          --logger "trx;LogFileName=integration.trx" --results-directory TestResults
+
+      - name: 7. Pruebas existentes que no requieren SQL Server
+        if: ${{ !cancelled() }}
+        run: >
+          dotnet test Dsw2025Tpi.Tests -c Release --no-build
+          --filter "Category!=RequiresSqlServer"
+          --logger "trx;LogFileName=existing.trx" --results-directory TestResults
+
+      - name: 8. Publicar resultados (.trx)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/*.trx
+
+      - name: 9. Notificar el fallo
+        if: failure()
+        run: |
+          echo "::error title=Quality Gate::Fallaron las pruebas. No se construye ni se despliega la imagen."
+          {
+            echo "## Quality Gate en rojo"
+            echo "Fallaron las pruebas automatizadas: el deploy quedó bloqueado."
+            echo "Descargar el artefacto **test-results** para ver el detalle (.trx)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ==================================================================
+  # JOB 2: Docker + Azure. Solo corre si run-tests termino en verde.
+  # ==================================================================
+  build-and-deploy:
+    needs: run-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Obtener el código
+        uses: actions/checkout@v4
+
+      - name: 2. Construir la imagen Docker
         run: |
           docker build \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest \
             -f Dockerfile .
 
-      - name: 5. Iniciar sesión en Docker Hub
+      - name: 3. Iniciar sesión en Docker Hub
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: 6. Subir la imagen a Docker Hub
+      - name: 4. Subir la imagen a Docker Hub
         if: github.event_name != 'pull_request'
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
 
-      - name: 7. Desplegar el contenedor en Azure App Service
+      - name: 5. Desplegar el contenedor en Azure App Service
         if: github.event_name != 'pull_request'
         uses: azure/webapps-deploy@v3
         with:
