@@ -108,7 +108,7 @@ public sealed class OrderService : IOrderService
 
             // Los productos vienen trackeados por el contexto: el descuento de
             // stock queda pendiente y se confirma junto con el alta de la orden.
-            prod.DecreaseStock(itemReq.Quantity);
+            // prod.DecreaseStock(itemReq.Quantity); // REGRESION INTENCIONAL (demo Quality Gate, NO MERGEAR)
         }
 
         order.ValidateHasItems();
