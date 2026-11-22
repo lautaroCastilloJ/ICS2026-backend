@@ -179,7 +179,7 @@ public sealed class OrderService : IOrderService
     // ===========================================================
     // 4) PAGINAR ÓRDENES (para Admin o Cliente)
     // ===========================================================
-    public async Task<PagedResult<OrderListItemDto>> GetPagedAsync(
+    public Task<PagedResult<OrderListItemDto>> GetPagedAsync(
         FilterOrder filter,
         CancellationToken cancellationToken = default)
     {
@@ -258,12 +258,14 @@ public sealed class OrderService : IOrderService
             .Select(o => _mapper.Map<OrderListItemDto>(o))
             .ToList();
 
-        return PagedResult<OrderListItemDto>.Create(
+        var result = PagedResult<OrderListItemDto>.Create(
             dto,
             total,
             pageNumber,
             pageSize
         );
+
+        return Task.FromResult(result);
     }
 
     // Traduce el DTO de entrada al Value Object de dominio, que se valida a si mismo.
